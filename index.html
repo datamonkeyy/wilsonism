@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,13 +6,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PT / SW Theory Explorer</title>
 <style>
-  :root {
+  /* ── Themes ── */
+  :root,[data-theme="dark"] {
     --bg:#0e0e10;--bg2:#161618;--bg3:#1e1e22;--bg4:#252528;
-    --bd:rgba(255,255,255,0.08);--bd2:rgba(255,255,255,0.15);
+    --bd:rgba(255,255,255,0.08);--bd2:rgba(255,255,255,0.16);
     --text:#e8e6e0;--muted:#6e6c66;--muted2:#9a9890;
     --accent:#c04828;--blue:#3b8bd4;--green:#1d9e75;--purple:#8b7dd8;--amber:#e5a825;
     --r:10px;--mono:'JetBrains Mono','Fira Mono',monospace;
   }
+  [data-theme="white"] {
+    --bg:#ffffff;--bg2:#f5f4f1;--bg3:#eceae5;--bg4:#e2e0db;
+    --bd:rgba(0,0,0,0.09);--bd2:rgba(0,0,0,0.18);
+    --text:#1a1a18;--muted:#888680;--muted2:#555450;
+    --accent:#c04828;--blue:#1a6db5;--green:#0e7a59;--purple:#5c4fb5;--amber:#b07d0a;
+    --r:10px;--mono:'JetBrains Mono','Fira Mono',monospace;
+  }
+  [data-theme="slate"] {
+    --bg:#1a1f2e;--bg2:#222840;--bg3:#2b3254;--bg4:#333d65;
+    --bd:rgba(255,255,255,0.08);--bd2:rgba(255,255,255,0.16);
+    --text:#d8dff5;--muted:#6a7399;--muted2:#9aa2c4;
+    --accent:#e07055;--blue:#5b9cf6;--green:#3ecfa0;--purple:#a98af7;--amber:#f0b840;
+    --r:10px;--mono:'JetBrains Mono','Fira Mono',monospace;
+  }
+  [data-theme="forest"] {
+    --bg:#111a12;--bg2:#172019;--bg3:#1e2b20;--bg4:#263629;
+    --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.14);
+    --text:#d4e8d0;--muted:#5e7a60;--muted2:#8aaa86;
+    --accent:#c96b3a;--blue:#5aa8d8;--green:#4dbb80;--purple:#9b82e0;--amber:#d4a830;
+    --r:10px;--mono:'JetBrains Mono','Fira Mono',monospace;
+  }
+  [data-theme="sepia"] {
+    --bg:#faf6ee;--bg2:#f0ead8;--bg3:#e6ddc8;--bg4:#dbd1b8;
+    --bd:rgba(0,0,0,0.09);--bd2:rgba(0,0,0,0.17);
+    --text:#2c2416;--muted:#8a7860;--muted2:#5c4e38;
+    --accent:#a03a18;--blue:#2a60a0;--green:#2a7a50;--purple:#5c3a90;--amber:#906010;
+    --r:10px;--mono:'JetBrains Mono','Fira Mono',monospace;
+  }
+
+  /* Theme swatch picker */
+  .theme-picker{display:flex;align-items:center;gap:6px;margin-left:auto}
+  .theme-picker span{font-size:.68rem;font-family:var(--mono);color:var(--muted);white-space:nowrap}
+  .tswatch{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .12s,border-color .12s;flex-shrink:0}
+  .tswatch:hover{transform:scale(1.2)}
+  .tswatch.active{border-color:var(--text)}
   *{box-sizing:border-box;margin:0;padding:0}
   html{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.6}
 
@@ -132,6 +169,14 @@
   <div class="dot"></div>
   <h1>PT / SW Theory Explorer</h1>
   <span class="hsub">Porcupine Tree &amp; Steven Wilson — scales, modes, chords &amp; intervals</span>
+  <div class="theme-picker">
+    <span>theme</span>
+    <div class="tswatch active" title="dark"   style="background:#0e0e10;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.15)" onclick="setTheme('dark',this)"></div>
+    <div class="tswatch"        title="white"  style="background:#ffffff;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.15)"       onclick="setTheme('white',this)"></div>
+    <div class="tswatch"        title="slate"  style="background:#1a1f2e;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.15)" onclick="setTheme('slate',this)"></div>
+    <div class="tswatch"        title="forest" style="background:#111a12;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12)" onclick="setTheme('forest',this)"></div>
+    <div class="tswatch"        title="sepia"  style="background:#faf6ee;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.15)"       onclick="setTheme('sepia',this)"></div>
+  </div>
 </header>
 <main>
 
@@ -933,6 +978,20 @@ function drawPiano(song){
 }
 
 // ── Init ──────────────────────────────────────────────────
+function setTheme(name, swatchEl){
+  document.documentElement.setAttribute('data-theme', name);
+  document.querySelectorAll('.tswatch').forEach(s=>s.classList.remove('active'));
+  if(swatchEl) swatchEl.classList.add('active');
+  else document.querySelector(`.tswatch[title="${name}"]`)?.classList.add('active');
+  try{ localStorage.setItem('pt-sw-theme', name); }catch(e){}
+}
+
+// Restore saved theme
+try{
+  const saved = localStorage.getItem('pt-sw-theme');
+  if(saved) setTheme(saved);
+}catch(e){}
+
 buildSongList();
 window.addEventListener('resize',()=>{
   if(currentSongIdx!==null){
