@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PT / SW Theory Explorer</title>
+<style>
+  :root {
+    --bg:#0e0e10;--bg2:#161618;--bg3:#1e1e22;--bg4:#252528;
+    --bd:rgba(255,255,255,0.08);--bd2:rgba(255,255,255,0.15);
+    --text:#e8e6e0;--muted:#6e6c66;--muted2:#9a9890;
+    --accent:#c04828;--blue:#3b8bd4;--green:#1d9e75;--purple:#8b7dd8;--amber:#e5a825;
+    --r:10px;--mono:'JetBrains Mono','Fira Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.6}
+
+  header{border-bottom:1px solid var(--bd);padding:1.25rem 1.5rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+  header h1{font-size:1rem;font-weight:600;letter-spacing:.04em}
+  .dot{width:8px;height:8px;background:var(--accent);border-radius:50%;flex-shrink:0}
+  .hsub{font-size:.75rem;color:var(--muted);font-family:var(--mono)}
+
+  main{max-width:860px;margin:0 auto;padding:1.25rem 1.25rem 4rem}
+
+  /* Controls */
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+  .search-wrap{position:relative;flex:1;min-width:180px}
+  .search-wrap input{width:100%;padding:7px 10px 7px 32px;background:var(--bg2);border:1px solid var(--bd);border-radius:7px;color:var(--text);font-size:.8rem;font-family:var(--mono);outline:none}
+  .search-wrap input:focus{border-color:var(--bd2)}
+  .search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);opacity:.35;pointer-events:none}
+  .fbtn{font-size:.72rem;font-family:var(--mono);padding:5px 11px;border:1px solid var(--bd);border-radius:6px;cursor:pointer;background:transparent;color:var(--muted);transition:all .12s;white-space:nowrap}
+  .fbtn:hover{border-color:var(--bd2);color:var(--text)}
+  .fbtn.active{background:var(--bg3);border-color:var(--bd2);color:var(--text)}
+
+  /* Album groups */
+  .album-group{margin-bottom:.25rem}
+  .album-header{font-size:.68rem;font-family:var(--mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:.5rem 0 .35rem;border-top:1px solid var(--bd);margin-top:.5rem;display:flex;align-items:center;gap:.5rem}
+  .era-pt{padding:2px 6px;border-radius:4px;font-size:.62rem;background:rgba(192,72,40,.12);color:#e07055}
+  .era-sw{padding:2px 6px;border-radius:4px;font-size:.62rem;background:rgba(59,139,212,.12);color:#6aaee0}
+  .song-grid{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.5rem}
+  .sbtn{font-size:.72rem;font-family:var(--mono);padding:5px 10px;border:1px solid var(--bd);border-radius:6px;cursor:pointer;background:transparent;color:var(--muted);transition:all .12s}
+  .sbtn:hover{border-color:var(--bd2);color:var(--text)}
+  .sbtn.active{background:var(--bg3);border-color:var(--bd2);color:var(--text)}
+  .sbtn.hidden{display:none}
+
+  /* Theory card */
+  .theory-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:1.1rem 1.25rem;margin:1rem 0}
+  .tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:.85rem}
+  .ti label{font-size:.68rem;color:var(--muted);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:2px}
+  .ti span{font-size:.95rem;font-weight:600}
+  .scale-notes{font-family:var(--mono);font-size:.78rem;color:var(--blue);margin-bottom:.7rem;letter-spacing:.03em}
+  .theory-notes{font-size:.83rem;color:var(--muted);line-height:1.65;border-top:1px solid var(--bd);padding-top:.7rem}
+
+  /* Tab sections */
+  .section-tabs{display:flex;gap:6px;margin:1rem 0 .75rem;border-bottom:1px solid var(--bd);padding-bottom:.75rem}
+  .stab{font-size:.75rem;font-family:var(--mono);padding:5px 13px;border:1px solid var(--bd);border-radius:6px;cursor:pointer;background:transparent;color:var(--muted);transition:all .12s}
+  .stab:hover{border-color:var(--bd2);color:var(--text)}
+  .stab.active{background:var(--bg3);border-color:var(--bd2);color:var(--text)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  /* Pos row */
+  .pos-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:.9rem}
+  .pos-label{font-size:.7rem;color:var(--muted);font-family:var(--mono)}
+
+  /* Legend */
+  .legend{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:.65rem}
+  .li{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--muted);font-family:var(--mono)}
+  .ld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+  .sec-label{font-family:var(--mono);font-size:.68rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.45rem}
+  .canvas-wrap{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:.75rem .5rem;margin-bottom:1rem;overflow-x:auto}
+  canvas{display:block}
+
+  /* Chord diagrams */
+  .chord-section{margin-bottom:1rem}
+  .chord-label{font-size:.8rem;font-family:var(--mono);color:var(--muted2);margin-bottom:.6rem}
+  .chord-row{display:flex;flex-wrap:wrap;gap:12px}
+
+  /* Guitar chord box SVG wrapper */
+  .chord-box{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:opacity .15s}
+  .chord-box:hover{opacity:.8}
+  .chord-box .chord-name{font-size:.72rem;font-family:var(--mono);color:var(--muted2);text-align:center}
+  .chord-box .chord-role{font-size:.62rem;font-family:var(--mono);color:var(--muted);text-align:center}
+
+  /* Piano chord mini */
+  .piano-chord-box{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+  .piano-chord-box .chord-name{font-size:.72rem;font-family:var(--mono);color:var(--muted2);text-align:center}
+  .piano-chord-box .chord-role{font-size:.62rem;font-family:var(--mono);color:var(--muted);text-align:center}
+
+  /* Selected chord highlight */
+  .chord-detail{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1rem;display:none}
+  .chord-detail.active{display:block}
+  .chord-detail h3{font-size:.9rem;font-weight:600;margin-bottom:.4rem}
+  .chord-detail p{font-size:.8rem;color:var(--muted);line-height:1.6}
+  .chord-notes-row{display:flex;gap:6px;flex-wrap:wrap;margin:.6rem 0}
+  .cnote{font-family:var(--mono);font-size:.72rem;padding:3px 8px;border-radius:5px;background:var(--bg4);color:var(--muted2)}
+  .cnote.root{background:rgba(192,72,40,.2);color:#e07055}
+  .cnote.third{background:rgba(59,139,212,.2);color:#6aaee0}
+  .cnote.fifth{background:rgba(29,158,117,.2);color:#4dc99a}
+  .cnote.seventh{background:rgba(139,125,216,.2);color:#b0a4e8}
+
+  /* Key/mode filter selects */
+  .fselect{font-size:.72rem;font-family:var(--mono);padding:5px 8px;border:1px solid var(--bd);border-radius:6px;background:var(--bg2);color:var(--muted);cursor:pointer;outline:none;transition:border-color .12s}
+  .fselect:focus,.fselect:hover{border-color:var(--bd2);color:var(--text)}
+  .filter-row2{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+  .filter-row2 label{font-size:.68rem;font-family:var(--mono);color:var(--muted);white-space:nowrap}
+
+  /* Similar songs panel */
+  .sim-panel{margin-top:.25rem}
+  .sim-group{margin-bottom:1rem}
+  .sim-group-title{font-size:.68rem;font-family:var(--mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--bd)}
+  .sim-list{display:flex;flex-direction:column;gap:5px}
+  .sim-item{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:7px;cursor:pointer;transition:border-color .12s}
+  .sim-item:hover{border-color:var(--bd2)}
+  .sim-item.current{border-color:rgba(192,72,40,.4);background:rgba(192,72,40,.06)}
+  .sim-name{font-size:.8rem;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sim-meta{font-size:.68rem;font-family:var(--mono);color:var(--muted);white-space:nowrap}
+  .sim-badges{display:flex;gap:4px;flex-shrink:0}
+  .badge{font-size:.6rem;font-family:var(--mono);padding:2px 6px;border-radius:4px;white-space:nowrap}
+  .badge-key{background:rgba(139,125,216,.18);color:#b0a4e8}
+  .badge-mode{background:rgba(29,158,117,.15);color:#4dc99a}
+  .badge-interval{background:rgba(229,168,37,.15);color:#e5a825}
+  .sim-score{font-size:.65rem;font-family:var(--mono);color:var(--muted);min-width:28px;text-align:right}
+
+  footer{text-align:center;padding:1.25rem;font-size:.7rem;color:var(--muted);border-top:1px solid var(--bd);font-family:var(--mono)}
+  @media(max-width:520px){header{padding:1rem}main{padding:1rem .75rem 3rem}}
+</style>
+</head>
+<body>
+<header>
+  <div class="dot"></div>
+  <h1>PT / SW Theory Explorer</h1>
+  <span class="hsub">Porcupine Tree &amp; Steven Wilson — scales, modes, chords &amp; intervals</span>
+</header>
+<main>
+
+<div class="controls">
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="search" placeholder="search songs, mode, key..." oninput="filterSongs()">
+  </div>
+  <button class="fbtn active" onclick="setFilter('all',this)">all</button>
+  <button class="fbtn" onclick="setFilter('pt',this)">porcupine tree</button>
+  <button class="fbtn" onclick="setFilter('sw',this)">steven wilson solo</button>
+</div>
+
+<div class="filter-row2">
+  <label>key:</label>
+  <select class="fselect" id="key-filter" onchange="filterSongs()">
+    <option value="">any</option>
+    <option>C</option><option>C#</option><option>D</option><option>D#</option>
+    <option>E</option><option>F</option><option>F#</option><option>G</option>
+    <option>G#</option><option>A</option><option>A#</option><option>B</option>
+  </select>
+  <label>mode:</label>
+  <select class="fselect" id="mode-filter" onchange="filterSongs()">
+    <option value="">any</option>
+    <option>Aeolian</option><option>Dorian</option><option>Major</option>
+    <option>Mixolydian</option><option>Lydian</option><option>Phrygian</option>
+    <option>Phrygian Dom</option><option>Harmonic Minor</option>
+  </select>
+  <button class="fbtn" onclick="clearFilters()" style="margin-left:2px">clear</button>
+</div>
+
+<div id="song-list"></div>
+
+<div id="theory-card" class="theory-card" style="display:none"></div>
+
+<div id="main-block" style="display:none">
+
+  <!-- Section tabs -->
+  <div class="section-tabs">
+    <button class="stab active" onclick="showTab('scales',this)">scales &amp; fretboard</button>
+    <button class="stab" onclick="showTab('chords',this)">chord diagrams</button>
+    <button class="stab" onclick="showTab('similar',this)">similar songs</button>
+  </div>
+
+  <!-- SCALES TAB -->
+  <div id="tab-scales" class="tab-panel active">
+    <div class="pos-row">
+      <span class="pos-label">fretboard position:</span>
+      <button class="fbtn active" id="pos-song" onclick="setPos('song')">song default</button>
+      <button class="fbtn" id="pos-open" onclick="setPos('open')">open (0)</button>
+      <button class="fbtn" id="pos-5" onclick="setPos(5)">5th fret</button>
+      <button class="fbtn" id="pos-7" onclick="setPos(7)">7th fret</button>
+      <button class="fbtn" id="pos-12" onclick="setPos(12)">12th fret</button>
+    </div>
+    <div class="legend">
+      <div class="li"><div class="ld" style="background:#c04828"></div>Root (1)</div>
+      <div class="li"><div class="ld" style="background:#3b8bd4"></div>3rd</div>
+      <div class="li"><div class="ld" style="background:#1d9e75"></div>5th</div>
+      <div class="li"><div class="ld" style="background:#8b7dd8"></div>7th</div>
+      <div class="li"><div class="ld" style="background:#e5a825"></div>Other</div>
+      <div class="li"><div class="ld" style="background:#1e1e22;border:1px solid rgba(255,255,255,0.1)"></div>Not in scale</div>
+    </div>
+    <p class="sec-label">Guitar — standard tuning E A D G B e</p>
+    <div class="canvas-wrap"><canvas id="fret-canvas"></canvas></div>
+    <p class="sec-label">Piano — two octaves from C4</p>
+    <div class="canvas-wrap"><canvas id="piano-canvas"></canvas></div>
+  </div>
+
+  <!-- CHORDS TAB -->
+  <div id="tab-chords" class="tab-panel">
+    <div class="chord-detail" id="chord-detail"></div>
+    <div class="chord-section">
+      <p class="chord-label">Diatonic chords — tap a chord to see voicing details</p>
+      <div class="chord-row" id="guitar-chords"></div>
+    </div>
+    <div class="chord-section" style="margin-top:1.5rem">
+      <p class="chord-label">Piano voicings (root position)</p>
+      <div class="chord-row" id="piano-chords"></div>
+    </div>
+  </div>
+
+  <!-- SIMILAR SONGS TAB -->
+  <div id="tab-similar" class="tab-panel">
+    <div id="similar-panel" class="sim-panel"></div>
+  </div>
+
+</div>
+</main>
+<footer>built for study · porcupine tree &amp; steven wilson · scales, modes &amp; chords</footer>
+
+<script>
+// ── Music theory core ──────────────────────────────────────
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NI=n=>NOTES.indexOf(n);
+const nAt=(root,semi)=>NOTES[(NI(root)+semi+120)%12];
+
+const MODES={
+  'Dorian':        [0,2,3,5,7,9,10],
+  'Aeolian':       [0,2,3,5,7,8,10],
+  'Phrygian':      [0,1,3,5,7,8,10],
+  'Lydian':        [0,2,4,6,7,9,11],
+  'Mixolydian':    [0,2,4,5,7,9,10],
+  'Major':         [0,2,4,5,7,9,11],
+  'Harmonic Minor':[0,2,3,5,7,8,11],
+  'Phrygian Dom':  [0,1,4,5,7,8,10],
+};
+const IV=['1','b2','2','b3','3','4','b5','5','b6','6','b7','7'];
+const ROMAN=['i','ii','iii','iv','v','vi','vii'];
+const ROMAN_MAJ=['I','II','III','IV','V','VI','VII'];
+
+function getScale(song){
+  const ivs=MODES[song.mode];
+  const r=NI(song.key);
+  const scaleNotes=ivs.map(i=>NOTES[(r+i)%12]);
+  const scaleMap={};
+  ivs.forEach((iv,i)=>{scaleMap[scaleNotes[i]]=iv;});
+  return{scaleNotes,scaleMap,ivs};
+}
+
+// Build diatonic triads (and 7ths) for a scale
+function buildDiatonicChords(song){
+  const{scaleNotes,ivs}=getScale(song);
+  const chords=[];
+  for(let deg=0;deg<7;deg++){
+    const root=scaleNotes[deg];
+    const third=scaleNotes[(deg+2)%7];
+    const fifth=scaleNotes[(deg+4)%7];
+    const seventh=scaleNotes[(deg+6)%7];
+    // Determine chord quality from intervals
+    const i3=(NI(third)-NI(root)+12)%12;
+    const i5=(NI(fifth)-NI(root)+12)%12;
+    const i7=(NI(seventh)-NI(root)+12)%12;
+    let quality='';
+    if(i3===4&&i5===7) quality='maj';
+    else if(i3===3&&i5===7) quality='m';
+    else if(i3===3&&i5===6) quality='dim';
+    else if(i3===4&&i5===8) quality='aug';
+    else quality='?';
+    let q7='';
+    if(i7===11) q7='maj7';
+    else if(i7===10) q7='7';
+    else if(i7===9) q7='m7';
+    // Roman numeral
+    const isMinor=(quality==='m'||quality==='dim');
+    const romanBase=isMinor?ROMAN[deg]:ROMAN_MAJ[deg];
+    const roman=quality==='dim'?romanBase+'°':romanBase;
+    chords.push({root,third,fifth,seventh,quality,q7,roman,deg,i3,i5,i7});
+  }
+  return chords;
+}
+
+// ── Guitar chord shapes ────────────────────────────────────
+// Returns array of {string(0=low E), fret, finger} for a chord
+// We use common open and barre shapes based on root and quality
+const STR_OPEN=[4,9,2,7,11,4]; // EADGBE in semitones from C
+
+function getGuitarChord(root,quality){
+  const r=NI(root);
+  // Common chord shapes: [string(0=lowE), fret, finger]
+  // Positive fret = fretted, 0 = open, -1 = muted
+  // We'll pick appropriate shapes for the most common voicings
+  const shapes={
+    // Major open/barre shapes
+    'E maj':  {name:'E',  mute:[],open:[0,1,2,3,4,5], frets:[0,2,2,1,0,0], fingers:[0,2,3,1,0,0], barre:null, pos:0},
+    'A maj':  {name:'A',  mute:[0],open:[1,2,3,4,5],  frets:[-1,0,2,2,2,0],fingers:[0,0,1,2,3,0], barre:null, pos:0},
+    'D maj':  {name:'D',  mute:[0,1],open:[2,3,4,5],  frets:[-1,-1,0,2,3,2],fingers:[0,0,0,1,3,2], barre:null, pos:0},
+    'G maj':  {name:'G',  mute:[],open:[0,1,2,3,4,5], frets:[3,2,0,0,0,3], fingers:[2,1,0,0,0,3], barre:null, pos:0},
+    'C maj':  {name:'C',  mute:[0],open:[1,2,3,4,5],  frets:[-1,3,2,0,1,0],fingers:[0,3,2,0,1,0], barre:null, pos:0},
+    'F maj':  {name:'F',  mute:[],open:[],             frets:[1,1,2,3,3,1], fingers:[1,1,2,3,4,1], barre:1, pos:1},
+    'B maj':  {name:'B',  mute:[0],open:[],            frets:[-1,2,4,4,4,2],fingers:[0,1,2,3,4,1], barre:2, pos:2},
+    'Bb maj': {name:'Bb', mute:[],open:[],             frets:[1,1,3,3,3,1], fingers:[1,1,2,3,4,1], barre:1, pos:1},
+    'Eb maj': {name:'Eb', mute:[],open:[],             frets:[3,3,5,5,5,3], fingers:[1,1,2,3,4,1], barre:3, pos:3},
+    'Ab maj': {name:'Ab', mute:[0],open:[],            frets:[-1,4,6,6,6,4],fingers:[0,1,2,3,4,1], barre:4, pos:4},
+    'Db maj': {name:'Db', mute:[0],open:[],            frets:[-1,4,3,1,2,1],fingers:[0,3,2,0,1,0], barre:1, pos:1},
+    'Gb maj': {name:'F#', mute:[],open:[],             frets:[2,2,4,4,4,2], fingers:[1,1,2,3,4,1], barre:2, pos:2},
+    // Minor
+    'E m':    {name:'Em', mute:[],open:[0,1,2,3,4,5], frets:[0,2,2,0,0,0], fingers:[0,2,3,0,0,0], barre:null, pos:0},
+    'A m':    {name:'Am', mute:[0],open:[1,2,3,4,5],  frets:[-1,0,2,2,1,0],fingers:[0,0,2,3,1,0], barre:null, pos:0},
+    'D m':    {name:'Dm', mute:[0,1],open:[2,3,4,5],  frets:[-1,-1,0,2,3,1],fingers:[0,0,0,2,3,1], barre:null, pos:0},
+    'G m':    {name:'Gm', mute:[],open:[],             frets:[3,1,0,0,3,3],fingers:[2,1,0,0,3,4], barre:null, pos:0},
+    'C m':    {name:'Cm', mute:[],open:[],             frets:[3,3,5,5,4,3], fingers:[1,1,3,4,2,1], barre:3, pos:3},
+    'F m':    {name:'Fm', mute:[],open:[],             frets:[1,1,3,3,2,1], fingers:[1,1,3,4,2,1], barre:1, pos:1},
+    'B m':    {name:'Bm', mute:[0],open:[],            frets:[-1,2,4,4,3,2],fingers:[0,1,3,4,2,1], barre:2, pos:2},
+    'Bb m':   {name:'Bbm',mute:[],open:[],             frets:[1,1,3,3,2,1], fingers:[1,1,3,4,2,1], barre:1, pos:1},
+    'Eb m':   {name:'Ebm',mute:[],open:[],             frets:[3,3,5,5,4,3], fingers:[1,1,3,4,2,1], barre:3, pos:3},
+    'Ab m':   {name:'Abm',mute:[0],open:[],            frets:[-1,4,6,6,5,4],fingers:[0,1,3,4,2,1], barre:4, pos:4},
+    'Db m':   {name:'C#m',mute:[0],open:[],            frets:[-1,4,6,6,5,4],fingers:[0,1,3,4,2,1], barre:4, pos:4},
+    'Gb m':   {name:'F#m',mute:[0],open:[],            frets:[-1,2,4,4,3,2],fingers:[0,1,3,4,2,1], barre:2, pos:2},
+    'F# m':   {name:'F#m',mute:[0],open:[],            frets:[-1,2,4,4,3,2],fingers:[0,1,3,4,2,1], barre:2, pos:2},
+    'C# m':   {name:'C#m',mute:[0],open:[],            frets:[-1,4,6,6,5,4],fingers:[0,1,3,4,2,1], barre:4, pos:4},
+    'G# m':   {name:'G#m',mute:[],open:[],             frets:[4,4,6,6,5,4], fingers:[1,1,3,4,2,1], barre:4, pos:4},
+    'D# m':   {name:'Ebm',mute:[],open:[],             frets:[3,3,5,5,4,3], fingers:[1,1,3,4,2,1], barre:3, pos:3},
+    'A# m':   {name:'Bbm',mute:[],open:[],             frets:[1,1,3,3,2,1], fingers:[1,1,3,4,2,1], barre:1, pos:1},
+    // Diminished
+    'B dim':  {name:'Bdim',mute:[0,1],open:[],         frets:[-1,-1,1,2,1,2],fingers:[0,0,1,3,2,4], barre:null, pos:0},
+    'dim generic': {name:'dim',mute:[0,1],open:[],     frets:[-1,-1,2,3,2,3],fingers:[0,0,1,3,2,4], barre:null, pos:0},
+  };
+
+  // Normalise root name
+  const enharmonic={'A#':'Bb','D#':'Eb','G#':'Ab','C#':'Db','F#':'Gb'};
+  const rNorm=enharmonic[root]||root;
+  const key1=`${rNorm} ${quality}`;
+  const key2=`${root} ${quality}`;
+  if(shapes[key2])return{...shapes[key2],displayName:shapes[key2].name};
+  if(shapes[key1])return{...shapes[key1],displayName:shapes[key1].name};
+  // Fallback: barre chord based on root position on 6th or 5th string
+  const fret6=(r-4+12)%12; // root on low E (E=4)
+  const fret5=(r-9+12)%12; // root on A string (A=9)
+  if(quality==='maj'){
+    if(fret6>=0&&fret6<12){
+      return{displayName:root,frets:[fret6,fret6+2,fret6+2,fret6+1,fret6,fret6],fingers:[1,3,4,2,1,1],barre:fret6,pos:fret6,mute:[]};
+    }
+    return{displayName:root,frets:[-1,fret5,fret5+2,fret5+2,fret5+2,fret5],fingers:[0,1,2,3,4,1],barre:fret5,pos:fret5,mute:[0]};
+  }
+  if(quality==='m'){
+    if(fret6>=0&&fret6<12){
+      return{displayName:root+'m',frets:[fret6,fret6+2,fret6+2,fret6,fret6,fret6],fingers:[1,3,4,1,1,1],barre:fret6,pos:fret6,mute:[]};
+    }
+    return{displayName:root+'m',frets:[-1,fret5,fret5+2,fret5+2,fret5+1,fret5],fingers:[0,1,3,4,2,1],barre:fret5,pos:fret5,mute:[0]};
+  }
+  // dim fallback
+  return{...shapes['dim generic'],displayName:root+'dim'};
+}
+
+// ── Draw guitar chord box (SVG) ────────────────────────────
+function drawGuitarChordSVG(chordData){
+  const{frets,fingers,barre,pos,mute,displayName}=chordData;
+  const W=72,H=90;
+  const ml=14,mr=8,mt=20,mb=10;
+  const cols=5,rows=4;
+  const cw=(W-ml-mr)/cols;
+  const rh=(H-mt-mb)/rows;
+  const sx=ml,sy=mt;
+
+  let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  // Position marker
+  const minFret=frets.filter(f=>f>0).reduce((a,b)=>Math.min(a,b),99);
+  if(minFret>1){
+    svg+=`<text x="${ml-4}" y="${sy+rh*.6}" font-size="8" font-family="JetBrains Mono,monospace" fill="#6e6c66" text-anchor="end">${minFret}</text>`;
+  }
+
+  // Grid
+  for(let r=0;r<=rows;r++){
+    const y=sy+r*rh;
+    const lw=r===0&&(pos===0||minFret===1)?2.5:0.6;
+    const col=r===0&&(pos===0||minFret===1)?'#c8c4bc':'rgba(255,255,255,0.15)';
+    svg+=`<line x1="${sx}" y1="${y}" x2="${sx+cols*cw}" y2="${y}" stroke="${col}" stroke-width="${lw}"/>`;
+  }
+  for(let c=0;c<=cols;c++){
+    svg+=`<line x1="${sx+c*cw}" y1="${sy}" x2="${sx+c*cw}" y2="${sy+rows*rh}" stroke="rgba(255,255,255,0.15)" stroke-width="0.6"/>`;
+  }
+
+  // Barre
+  if(barre!==null){
+    const fr=barre-minFret+1;
+    const barY=sy+(fr-.5)*rh;
+    svg+=`<rect x="${sx}" y="${barY-4}" width="${cols*cw}" height="8" rx="4" fill="#3b8bd4" opacity="0.85"/>`;
+  }
+
+  // Dots
+  frets.forEach((f,s)=>{
+    const cx=sx+s*cw;
+    if(f===-1){
+      // muted
+      svg+=`<text x="${cx}" y="${sy-7}" font-size="9" fill="#6e6c66" text-anchor="middle" font-family="sans-serif">×</text>`;
+    } else if(f===0){
+      // open
+      svg+=`<circle cx="${cx}" cy="${sy-7}" r="3.5" fill="none" stroke="#6e6c66" stroke-width="1"/>`;
+    } else {
+      const fr=f-minFret+1;
+      const dotY=sy+(fr-.5)*rh;
+      if(barre!==null&&f===barre)return; // covered by barre bar
+      const iRoot=(fingers[s]===1&&barre!==null)||s===0; // rough root highlight
+      svg+=`<circle cx="${cx}" cy="${dotY}" r="5" fill="#3b8bd4"/>`;
+      if(fingers[s]>0){
+        svg+=`<text x="${cx}" y="${dotY+3.5}" font-size="6" font-family="JetBrains Mono,monospace" fill="#fff" text-anchor="middle">${fingers[s]}</text>`;
+      }
+    }
+  });
+
+  svg+='</svg>';
+  return svg;
+}
+
+// ── Draw piano chord mini (canvas-based, returns SVG) ─────
+function drawPianoChordSVG(notes){
+  // notes: array of note names in the chord
+  const noteSet=new Set(notes.map(n=>NI(n)));
+  const W=90,H=58;
+  const ws=[0,2,4,5,7,9,11],bs=[1,3,-1,6,8,10,-1];
+  const no=2,tw=7*no;
+  const wW=Math.floor((W-2)/tw),wH=H-12;
+  const bW=Math.round(wW*.58),bH=Math.round(wH*.6);
+  let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  // White keys
+  let wx=1;
+  for(let o=0;o<no;o++){
+    for(let w=0;w<7;w++){
+      const sm=(ws[w]+o*12)%12;
+      const active=noteSet.has(sm);
+      const fill=active?'#3b8bd4':'#1e1e22';
+      const stroke='rgba(255,255,255,0.12)';
+      svg+=`<rect x="${wx}" y="2" width="${wW-1}" height="${wH}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="0.75"/>`;
+      wx+=wW;
+    }
+  }
+  // Black keys
+  wx=1;
+  for(let o=0;o<no;o++){
+    for(let w=0;w<7;w++){
+      const bp=bs[w];if(bp<0){wx+=wW;continue;}
+      const sm=(bp+o*12)%12;
+      const active=noteSet.has(sm);
+      const fill=active?'#1d9e75':'#111113';
+      const bx=wx+wW-Math.round(bW/2);
+      svg+=`<rect x="${bx}" y="2" width="${bW}" height="${bH}" rx="1" fill="${fill}" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>`;
+      wx+=wW;
+    }
+  }
+  svg+='</svg>';
+  return svg;
+}
+
+// ── Chord quality name helpers ─────────────────────────────
+function chordDisplayName(root,quality){
+  const n=root;
+  if(quality==='maj')return n;
+  if(quality==='m')return n+'m';
+  if(quality==='dim')return n+'°';
+  if(quality==='aug')return n+'+';
+  return n+'?';
+}
+function chordRoleDescription(chord){
+  const roles={
+    0:'Tonic — home base, most stable',
+    1:'Supertonic — tension, stepping stone',
+    2:'Mediant — colour chord, mood shift',
+    3:'Subdominant — movement away from tonic',
+    4:'Dominant — tension wanting resolution',
+    5:'Submediant — relative major/minor pivot',
+    6:'Leading tone — maximum tension',
+  };
+  return roles[chord.deg]||'';
+}
+function intervalName(semi){
+  const n={0:'R',1:'b2',2:'2',3:'b3',4:'3',5:'P4',6:'b5/♯4',7:'P5',8:'b6',9:'6',10:'b7',11:'7'};
+  return n[semi]||semi;
+}
+
+// ── Song database ─────────────────────────────────────────
+const albums=[
+  {name:'In Absentia (2002)',era:'pt',songs:[
+    {name:'Blackest Eyes',key:'E',mode:'Aeolian',pos:0,notes:'E natural minor. Riff drones on open E while melody walks the scale. i–♭VII–♭VI–♭VII chord movement. The ♭6 (C) is the most characteristically minor-sounding interval.'},
+    {name:'Trains',key:'G',mode:'Dorian',pos:3,notes:'G Dorian — raised 6th (E♮) gives yearning quality. vs G Aeolian, one note different (E♮ vs E♭). The IV chord becomes C major rather than Cm, giving warmth.'},
+    {name:'Lips of Ashes',key:'F#',mode:'Aeolian',pos:2,notes:'F# natural minor. i–v–VI–VII (F#m–C#m–A–B). Great for studying SW\'s melodic approach over natural minor — vocal stays close to chord tones.'},
+    {name:'The Sound of Muzak',key:'A',mode:'Mixolydian',pos:5,notes:'A Mixolydian — major feel with ♭7 (G♮). Floats between A and G: the defining I–♭VII Mixolydian gesture. ♭7 removes the leading tone, creating a hovering quality.'},
+    {name:'Collapse the Light Into Earth',key:'D',mode:'Major',pos:0,notes:'Sparse D major closer. I–V–vi–IV piano texture. Voice-leading uses scale degrees 1, 3, 5, 7 melodically — very transparent harmony.'},
+  ]},
+  {name:'Deadwing (2005)',era:'pt',songs:[
+    {name:'Deadwing',key:'E',mode:'Aeolian',pos:0,notes:'E natural minor, galloping feel. Synth ostinato outlines i–♭VII–♭VI–♭VII. Metal riff uses open E as anchor. The ♭6 (C) appears frequently — the Aeolian "sad" note.'},
+    {name:'Shallow',key:'B',mode:'Aeolian',pos:7,notes:'B minor, most direct PT radio moment. Verse: Bm–A–G–A (i–♭VII–♭VI–♭VII). Chorus lifts to D major (relative major) for brightness before resolving back.'},
+    {name:'Arriving Somewhere',key:'C#',mode:'Aeolian',pos:4,notes:'C# natural minor. Epic build: i–VI–VII (C#m–A–B). Quiet intro arpeggios outline the full scale. Ascending bass line walks Aeolian scale stepwise.'},
+    {name:'Mellotron Scratch',key:'E',mode:'Dorian',pos:0,notes:'E Dorian — raised 6th (C#) vs the E minor backdrop. The IV chord (A major) is enabled by C#, giving warmth that pure Aeolian would deny.'},
+    {name:'Lazarus',key:'G',mode:'Major',pos:3,notes:'G major ballad. I–V–vi–IV (G–D–Em–C) — the universal pop sequence, but SW\'s arranging gives it depth. Pedal steel-style lines elaborate the major scale upper extensions.'},
+    {name:'Halo',key:'D',mode:'Aeolian',pos:5,notes:'D natural minor, anthemic. Main riff: Dm–C–Bb–C. Chorus breaks to F major (♭III) for lift. Study i–♭III movement within Aeolian.'},
+  ]},
+  {name:'Fear of a Blank Planet (2007)',era:'pt',songs:[
+    {name:'Fear of a Blank Planet',key:'E',mode:'Lydian',pos:0,notes:'Lydian — raised ♯4 (A#) over E creates harmonic ambiguity. Chromatic passing tones, odd metres (13/8, 7/8). Alex Lifeson solo explores E Lydian extensively.'},
+    {name:'My Ashes',key:'F',mode:'Aeolian',pos:1,notes:'F natural minor. Sparse arrangement makes the scale audible. ♭6 (D♭) — most characteristically minor-sounding interval. Vocal outlines the Fm triad (F–A♭–C) almost exclusively in verse.'},
+    {name:'Anesthetize',key:'D',mode:'Aeolian',pos:0,notes:'D natural minor. Central theme exploits ♭7 (C) and ♭6 (B♭). Middle prog section shifts to D Mixolydian — ♮7 vs ♭7 creates striking mood contrast.'},
+    {name:'Sentimental',key:'A',mode:'Major',pos:5,notes:'Rare major-key PT. Clean A major, IV (D) and V (E). String arrangement adds Lydian colour (D# passing), giving sweetness a slight ache.'},
+    {name:'Way Out of Here',key:'B',mode:'Dorian',pos:7,notes:'B Dorian — raised 6th (G#) is key. Guitar melody outlines Dorian explicitly in intro. Verse settles to Aeolian when G# drops — mode shift is audible.'},
+    {name:'Sleep Together',key:'E',mode:'Mixolydian',pos:0,notes:'E Mixolydian — E major with ♭7 (D♮). Riff alternates E and D (I–♭VII). Slight krautrock/motorik feel. Absence of leading tone creates hovering quality.'},
+  ]},
+  {name:'The Incident (2009)',era:'pt',songs:[
+    {name:'The Incident',key:'E',mode:'Aeolian',pos:0,notes:'E natural minor suite backbone. i–♭VII–♭VI layered ostinatos. Single-note patterns imply harmony — each pitch change outlines an Aeolian chord.'},
+    {name:'Time Flies',key:'G',mode:'Major',pos:3,notes:'G major, emotional centrepiece. Fingerpicking outlines I–IV–V. Melody sits on pentatonic subset of G major. Mid-section moves through full diatonic G major chords.'},
+    {name:'Blind House',key:'D',mode:'Aeolian',pos:5,notes:'D natural minor. Riff: Dm–C–Bb–A. Note the V chord (A major) — borrowed from harmonic minor (C# instead of C♮). SW\'s signature: mostly Aeolian with ♭7→7 pivot for tension.'},
+    {name:'Octane Twisted',key:'B',mode:'Phrygian',pos:7,notes:'B Phrygian — ♭2 (C♮) gives exotic dark quality. Riff uses ♭II chord (C major over B), the quintessential Phrygian gesture. Useful contrast to Aeolian/Dorian majority.'},
+  ]},
+  {name:'Closure / Continuation (2022)',era:'pt',songs:[
+    {name:'Harridan',key:'F#',mode:'Aeolian',pos:2,notes:'F# natural minor comeback. Riff: F#m–E–D–E (i–♭VII–♭VI–♭VII). Middle section adds Lydian modal shift (raised 4th) recalling 2007 sound.'},
+    {name:'Rats Return',key:'E',mode:'Phrygian Dom',pos:0,notes:'Phrygian Dominant (♭2, major 3rd). E–F–G#–A–B–C–D. ♭2 (F♮ over E) gives dark flamenco quality. Major 3rd (G#) prevents it being purely dark.'},
+    {name:'Dignity',key:'G',mode:'Dorian',pos:3,notes:'G Dorian ballad — raised 6th (E♮) gives characteristic warmth. Piano-led. Compare E♮ in melody to Aeolian songs where it would be E♭ — transforms melancholy into bittersweet.'},
+    {name:'Chimera\'s Wreck',key:'C',mode:'Aeolian',pos:8,notes:'C natural minor, broad canvas. Long instrumental passages: Cm–B♭–A♭–B♭ (i–♭VII–♭VI–♭VII). C Aeolian in 8th position — root lands on 8th fret low E.'},
+    {name:'Walk the Plank',key:'D',mode:'Mixolydian',pos:0,notes:'D Mixolydian — D major but C♮ replaces C#. Riff alternates D and C (I–♭VII), textbook Mixolydian gesture. Good contrast to the Aeolian/Dorian majority.'},
+  ]},
+  {name:'Lightbulb Sun (2000) / Stupid Dream (1999)',era:'pt',songs:[
+    {name:'Shesmovedon',key:'A',mode:'Major',pos:5,notes:'A major, PT\'s most radio-friendly song. I–V–vi–IV. Guitar arpeggios outline the major triad. Contrast study: same A root in A Aeolian (Trains) vs A major — entirely different feel.'},
+    {name:'The Rest Will Flow',key:'D',mode:'Major',pos:0,notes:'D major, gentle and pastoral. Piano outlines diatonic major. Vocal melody uses pentatonic subset of D major (removing 4th and 7th). Good for studying pentatonic-from-major derivation.'},
+    {name:'Russia on Ice',key:'E',mode:'Aeolian',pos:0,notes:'E natural minor 12-minute epic. Multiple sections maintain E minor as tonal centre. Quiet sections pure Aeolian; heavier sections add chromatic alterations. Modal centre across dynamic contrasts.'},
+    {name:'Pure Narcotic',key:'G',mode:'Dorian',pos:3,notes:'G Dorian, early appearance of this mode in PT. Chorus lifts to IV chord (C major) — the Dorian-defining move. Compare with Trains (also G Dorian) — different deployments, same mode.'},
+    {name:'Stranger by the Minute',key:'C',mode:'Major',pos:8,notes:'C major, direct and song-oriented. Chorus: I–V–vi–IV. One of PT\'s most accessible songs. Good for mapping C major on guitar — all natural notes, easy modal position reference.'},
+  ]},
+  {name:'Signify (1996) / The Sky Moves Sideways (1995)',era:'pt',songs:[
+    {name:'Signify',key:'E',mode:'Dorian',pos:0,notes:'E Dorian, first true band album title track. Riff outlines Dorian scale with C# (raised 6th). Krautrock-influenced rhythm. Bridge between SW\'s early psychedelic phase and song-oriented direction.'},
+    {name:'Waiting',key:'A',mode:'Mixolydian',pos:5,notes:'A Mixolydian — PT\'s first charting single. A major feel with G♮ (♭7). Jazz/electronic mid-section departs the modal framework. ♭7 chord (G major over A) is the harmonic signature.'},
+    {name:'Every Home Is Wired',key:'D',mode:'Aeolian',pos:5,notes:'D natural minor with acoustic/electronic hybrid. Core: i–♭VII–♭VI, pure Aeolian. Fingerpicking makes scale intervals very audible.'},
+    {name:'The Sky Moves Sideways',key:'A',mode:'Aeolian',pos:5,notes:'A natural minor, 20-minute title track. Pink Floyd influence most explicit. Scale implied by texture rather than explicit chord movement in ambient sections.'},
+  ]},
+  {name:'Insurgentes (2008) — SW Solo',era:'sw',songs:[
+    {name:'Harmony Korine',key:'E',mode:'Aeolian',pos:0,notes:'Closest SW solo track to PT sound. E natural minor, wall-of-guitar. Same i–♭VII–♭VI–♭VII movement familiar from In Absentia. Good bridge song for PT→SW solo journey.'},
+    {name:'Insurgentes',key:'B',mode:'Dorian',pos:7,notes:'B Dorian — raised 6th (G#) gives melancholic but not crushingly dark quality. Bass outlines Dorian scale clearly. Steve Hackett feature adds Lydian colouring in solo section.'},
+  ]},
+  {name:'Grace for Drowning (2011) — SW Solo',era:'sw',songs:[
+    {name:'Deform to Form a Star',key:'A',mode:'Major',pos:5,notes:'A major ballad. Jordan Rudess piano outlines diatonic major in sweeping arpeggios. I–vi–IV–V — most consonant in Wilson\'s solo catalogue. Deliberate contrast to surrounding darkness.'},
+    {name:'Postcard',key:'F#',mode:'Aeolian',pos:2,notes:'F# natural minor, sparse and atmospheric. Saxophone (Theo Travis) weaves Aeolian scale lines while guitar provides static-chord texture. Same scale can work in jazz context as in prog-metal.'},
+    {name:'Raider II',key:'C#',mode:'Aeolian',pos:4,notes:'C# minor epic. Long build using layered ostinatos in C# Aeolian. Same key as Arriving Somewhere — compare the two for entirely different uses of the same tonal material.'},
+  ]},
+  {name:'The Raven That Refused to Sing (2013) — SW Solo',era:'sw',songs:[
+    {name:'Luminol',key:'E',mode:'Dorian',pos:0,notes:'Fan-favourite opener. E Dorian — C# (raised 6th) central to jazz-influenced harmony. Guthrie Govan riff uses Dorian arpeggios explicitly. C# enables A major chord (IV) in an E minor context.'},
+    {name:'Drive Home',key:'G',mode:'Major',pos:3,notes:'G major, heart-on-sleeve emotion. I–V–vi–IV — universal but arrangement elevates it. Major scale fully on display: every diatonic chord appears. Guthrie Govan solo is study in major-scale melodicism.'},
+    {name:'The Holy Drinker',key:'D',mode:'Dorian',pos:5,notes:'D Dorian with jazz/prog crossover. Raised 6th (B♮) gives saxophone lines bluesy warmth. Polyrhythm over static Dorian vamp. Compare D Dorian to D Aeolian: only B♮ vs B♭ changes.'},
+    {name:'The Pin Drop',key:'A',mode:'Aeolian',pos:5,notes:'A natural minor. Mellotron texture creates unsettling quality. Descending scale patterns. Dynamic shifts are characteristic — harmony stays modal while texture does emotional work.'},
+    {name:'The Watchmaker',key:'B',mode:'Mixolydian',pos:7,notes:'B Mixolydian — Rush influence most audible. B major with A♮ (♭7). Guthrie Govan solo explores Mixolydian vocabulary including the ♭7 bluesy note.'},
+    {name:'The Raven That Refused to Sing',key:'A',mode:'Aeolian',pos:5,notes:'A natural minor closer — SW\'s self-declared best song. Piano: Am–G–F–G (i–♭VII–♭VI–♭VII). Melody ascends full minor scale in climax. Textbook emotional expression in natural minor.'},
+  ]},
+  {name:'Hand. Cannot. Erase. (2015) — SW Solo',era:'sw',songs:[
+    {name:'3 Years Older',key:'E',mode:'Dorian',pos:0,notes:'E Dorian — C# (raised 6th) audible in guitar melody from first bar. Odd time (7/8 sections). Nick Beggs bass outlines Dorian arpeggios throughout. Compare with Luminol (also E Dorian) — same scale, different emotional register.'},
+    {name:'Hand Cannot Erase',key:'F#',mode:'Aeolian',pos:2,notes:'F# natural minor, introspective. Electronic elements on F# Aeolian framework. Melodic hook uses ♭3 (A) and ♭7 (E) heavily — two most emotionally loaded minor intervals.'},
+    {name:'Perfect Life',key:'C',mode:'Major',pos:8,notes:'C major, SW\'s most pop-leaning moment. Ninet Tayeb vocals central. Bouncy I–IV–V–I. Every chord diatonic. "Innocence before the fall" mood via fully consonant major harmony.'},
+    {name:'Routine',key:'D',mode:'Aeolian',pos:5,notes:'D natural minor, emotional centrepiece. Ninet Tayeb\'s vocal outlines Aeolian scale melodically. Children\'s choir adds F major (♭III) colour. Sparse enough for clear ear training against the recording.'},
+    {name:'Home Invasion',key:'B',mode:'Aeolian',pos:7,notes:'B minor, closest to PT\'s heavy sound here. Guthrie Govan lines deeply Aeolian. Subsequent Regret #9 section shifts to B Dorian temporarily — G# appears in melodic line. Perfect example of modal mixture.'},
+    {name:'Ancestral',key:'A',mode:'Dorian',pos:5,notes:'A Dorian — raised 6th (F#) defining feature. Jazz-influenced piano outlines Dorian harmony in quieter sections. 9-min runtime lets the mode breathe and develop.'},
+  ]},
+  {name:'To the Bone (2017) — SW Solo',era:'sw',songs:[
+    {name:'To the Bone',key:'F',mode:'Major',pos:1,notes:'F major, Peter Gabriel-influenced art pop. Most polished production in SW\'s catalogue. I–IV–vi–V — pure pop. Major scale in a very different context to Trains — same mode, different world.'},
+    {name:'Pariah',key:'A',mode:'Aeolian',pos:5,notes:'A natural minor featuring Ninet Tayeb. Am–G–F–G, classic Aeolian. Guthrie Govan solo explicitly runs the scale in ascending/descending patterns.'},
+    {name:'Permanating',key:'G',mode:'Major',pos:3,notes:'G major, SW\'s most overtly joyful song. ABBA-adjacent production. I–V–IV–V movement is defiantly simple. Compare G major fretboard to G Dorian / G Aeolian material in PT catalogue.'},
+    {name:'Song of I',key:'D',mode:'Dorian',pos:0,notes:'D Dorian with electronic production. Raised 6th (B♮) places this in Dorian. Ninet Tayeb vocal outlines Dorian mode in chorus. Listen for B♮ vs B♭ as the modal tell.'},
+    {name:'Nowhere Now',key:'E',mode:'Mixolydian',pos:0,notes:'E Mixolydian — E major with D♮ (♭7). Riff alternates E and D (I–♭VII). Acoustic-meets-electric arrangement, 70s prog influence. Mixolydian in prog-pop vs heavier PT usage.'},
+  ]},
+  {name:'The Harmony Codex (2023) — SW Solo',era:'sw',songs:[
+    {name:'Inclination',key:'F#',mode:'Dorian',pos:2,notes:'F# Dorian opener. Raised 6th (D#) gives searching quality. IV chord is B major (enabled by D#) — the Dorian fingerprint: IV major in a minor context.'},
+    {name:'Economies of Scale',key:'A',mode:'Aeolian',pos:5,notes:'A natural minor with cinematic orchestral production. String arrangements reinforce Aeolian colour. Bass ostinato outlines scale in repeating pattern.'},
+    {name:'Beautiful Scarecrow',key:'G',mode:'Major',pos:3,notes:'G major, pastoral and reflective. Acoustic guitar fingerpicking — every note clearly in G major. Chamber-music density while harmonic language stays diatonic major.'},
+    {name:'Staircase',key:'B',mode:'Aeolian',pos:7,notes:'B natural minor, ambient and slowly expanding. Pulsing synth patterns outline Bm harmony. Compare B Aeolian to B Dorian (The Watchmaker): G♮ vs G# the single difference.'},
+  ]},
+];
+
+const allSongs=[];
+albums.forEach((alb,ai)=>{
+  alb.songs.forEach((s,si)=>{allSongs.push({...s,albumName:alb.name,era:alb.era,ai,si});});
+});
+
+// ── State ─────────────────────────────────────────────────
+let activeFilter='all', currentSongIdx=null, posMode='song', activeTab='scales', activeChordIdx=null;
+
+// ── Similarity scoring ────────────────────────────────────
+// Two songs share the same interval pattern if same mode (regardless of key) → scale siblings
+// Same key + same mode → identical fretboard, easiest transition
+// Same key + different mode → same fretboard position, different colour
+// Same mode + relative keys (e.g. C major / A minor) → related sound world
+// We also detect "parallel" modes (same root, different mode)
+
+const ENHARMONIC={
+  'C#':'Db','Db':'C#','D#':'Eb','Eb':'D#','F#':'Gb','Gb':'F#',
+  'G#':'Ab','Ab':'G#','A#':'Bb','Bb':'A#',
+};
+function keysMatch(a,b){
+  return a===b||(ENHARMONIC[a]&&ENHARMONIC[a]===b)||(ENHARMONIC[b]&&ENHARMONIC[b]===a);
+}
+
+// Relative key pairs: e.g. C major ↔ A Aeolian share the same notes
+const RELATIVE_OFFSETS={
+  'Major':9,'Aeolian':0,'Dorian':10,'Phrygian':8,'Lydian':7,
+  'Mixolydian':2,'Harmonic Minor':0,'Phrygian Dom':8,
+};
+function scaleRootInC(song){
+  // returns semitone of root if we normalise so the Aeolian/Major relative = C
+  const off=RELATIVE_OFFSETS[song.mode]??0;
+  return(NI(song.key)+off+12)%12;
+}
+function relativeMatch(a,b){
+  return scaleRootInC(a)===scaleRootInC(b);
+}
+
+// Interval vector: count of each interval class in the mode
+function intervalVector(mode){
+  const ivs=MODES[mode]||[];
+  return ivs.join(',');
+}
+
+function scoreSimilarity(base,candidate){
+  if(base===candidate)return-1; // skip self
+  let score=0;
+  const reasons=[];
+  const sameKey=keysMatch(base.key,candidate.key);
+  const sameMode=base.mode===candidate.mode;
+  const sameInterval=intervalVector(base.mode)===intervalVector(candidate.mode);
+  const parallel=sameKey&&!sameMode; // same root, diff mode
+  const relative=relativeMatch(base,candidate)&&!sameKey;
+
+  if(sameKey&&sameMode){score+=100;reasons.push({t:'badge-key',l:'same key'},{t:'badge-mode',l:'same mode'});}
+  else if(sameMode){score+=60;reasons.push({t:'badge-mode',l:'same mode'});}
+  else if(sameInterval){score+=55;reasons.push({t:'badge-interval',l:'same intervals'});}
+
+  if(sameKey&&!sameMode){score+=30;reasons.push({t:'badge-key',l:'parallel'});}
+  if(relative&&!sameMode){score+=25;reasons.push({t:'badge-interval',l:'relative'});}
+
+  // Bonus: same era
+  if(base.era===candidate.era)score+=5;
+
+  return{score,reasons};
+}
+
+function renderSimilar(song){
+  const panel=document.getElementById('similar-panel');
+  const results=allSongs
+    .map((s,i)=>{const r=scoreSimilarity(song,s);return r===-1?null:{song:s,idx:i,...r};})
+    .filter(Boolean)
+    .filter(r=>r.score>0)
+    .sort((a,b)=>b.score-a.score);
+
+  // Group into tiers
+  const identical=results.filter(r=>r.score>=100);
+  const sameMode=results.filter(r=>r.score>=55&&r.score<100);
+  const related=results.filter(r=>r.score>0&&r.score<55);
+
+  function makeGroup(title,items){
+    if(!items.length)return'';
+    const rows=items.map(r=>`
+      <div class="sim-item${r.idx===currentSongIdx?' current':''}" onclick="selectSong(${r.idx})">
+        <div class="sim-name">${r.song.name}</div>
+        <div class="sim-badges">${r.reasons.map(b=>`<span class="badge ${b.t}">${b.l}</span>`).join('')}</div>
+        <div class="sim-meta">${r.song.key} ${r.song.mode}</div>
+      </div>`).join('');
+    return`<div class="sim-group"><div class="sim-group-title">${title}</div><div class="sim-list">${rows}</div></div>`;
+  }
+
+  panel.innerHTML=
+    makeGroup(`Exact match — same key &amp; mode (${song.key} ${song.mode})`,identical)||
+    (identical.length===0?`<div class="sim-group"><div class="sim-group-title">Exact match — same key &amp; mode (${song.key} ${song.mode})</div><p style="font-size:.8rem;color:var(--muted);padding:.5rem 0">No other songs share this exact key and mode.</p></div>`:'')
+    +makeGroup('Same mode — identical interval structure, different key',sameMode)
+    +makeGroup('Related — parallel mode or relative key',related);
+}
+
+// ── UI helpers ────────────────────────────────────────────
+function degColor(d){
+  if(d===0)return'#c04828';
+  if(d===3||d===4)return'#3b8bd4';
+  if(d===7)return'#1d9e75';
+  if(d===10||d===11)return'#8b7dd8';
+  return'#e5a825';
+}
+
+function buildSongList(){
+  const el=document.getElementById('song-list');
+  el.innerHTML='';
+  albums.forEach((alb,ai)=>{
+    const grp=document.createElement('div');
+    grp.className='album-group';grp.dataset.era=alb.era;
+    const hdr=document.createElement('div');
+    hdr.className='album-header';
+    hdr.innerHTML=`${alb.name} <span class="era-${alb.era}">${alb.era==='pt'?'Porcupine Tree':'Steven Wilson'}</span>`;
+    const grid=document.createElement('div');grid.className='song-grid';
+    alb.songs.forEach((s,si)=>{
+      const idx=allSongs.findIndex(x=>x.ai===ai&&x.si===si);
+      const btn=document.createElement('button');
+      btn.className='sbtn';btn.textContent=s.name;btn.dataset.idx=idx;btn.dataset.era=alb.era;
+      btn.onclick=()=>selectSong(idx);
+      grid.appendChild(btn);
+    });
+    grp.appendChild(hdr);grp.appendChild(grid);el.appendChild(grp);
+  });
+}
+
+function clearFilters(){
+  document.getElementById('key-filter').value='';
+  document.getElementById('mode-filter').value='';
+  document.getElementById('search').value='';
+  filterSongs();
+}
+
+function filterSongs(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const kf=document.getElementById('key-filter').value;
+  const mf2=document.getElementById('mode-filter').value;
+  document.querySelectorAll('.sbtn').forEach(btn=>{
+    const song=allSongs[+btn.dataset.idx];
+    const mf=activeFilter==='all'||btn.dataset.era===activeFilter;
+    const ms=!q||song.name.toLowerCase().includes(q)||song.albumName.toLowerCase().includes(q)||song.mode.toLowerCase().includes(q)||song.key.toLowerCase()===q.toLowerCase();
+    const mk=!kf||keysMatch(song.key,kf);
+    const mm=!mf2||song.mode===mf2;
+    btn.classList.toggle('hidden',!mf||!ms||!mk||!mm);
+  });
+  document.querySelectorAll('.album-group').forEach(grp=>{
+    const vis=[...grp.querySelectorAll('.sbtn')].some(b=>!b.classList.contains('hidden'));
+    grp.style.display=vis?'':'none';
+  });
+}
+
+function setFilter(f,el){
+  activeFilter=f;
+  document.querySelectorAll('.fbtn[onclick^="setFilter"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');filterSongs();
+}
+
+function showTab(tab,el){
+  activeTab=tab;
+  document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(currentSongIdx===null)return;
+  const s=allSongs[currentSongIdx];
+  if(tab==='chords')renderChords(s);
+  if(tab==='scales'){drawFretboard(s,getStartFret(s));drawPiano(s);}
+  if(tab==='similar')renderSimilar(s);
+}
+
+function selectSong(idx){
+  currentSongIdx=idx;activeChordIdx=null;
+  document.querySelectorAll('.sbtn').forEach(b=>b.classList.toggle('active',+b.dataset.idx===idx));
+  const song=allSongs[idx];
+  const{scaleNotes}=getScale(song);
+  const card=document.getElementById('theory-card');
+  card.style.display='block';
+  card.innerHTML=`
+    <div class="tgrid">
+      <div class="ti"><label>Song</label><span>${song.name}</span></div>
+      <div class="ti"><label>Album</label><span>${song.albumName}</span></div>
+      <div class="ti"><label>Key</label><span>${song.key}</span></div>
+      <div class="ti"><label>Mode</label><span>${song.mode}</span></div>
+      <div class="ti"><label>Default position</label><span>Fret ${song.pos===0?'0 (open)':song.pos}</span></div>
+    </div>
+    <div class="scale-notes">${song.key} ${song.mode} &nbsp;·&nbsp; ${scaleNotes.join(' – ')}</div>
+    <div class="theory-notes">${song.notes}</div>`;
+  document.getElementById('main-block').style.display='block';
+  if(activeTab==='scales'){drawFretboard(song,getStartFret(song));drawPiano(song);}
+  else if(activeTab==='chords')renderChords(song);
+  else if(activeTab==='similar')renderSimilar(song);
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── Chord tab renderer ────────────────────────────────────
+function renderChords(song){
+  const chords=buildDiatonicChords(song);
+
+  // Guitar chord boxes
+  const gcEl=document.getElementById('guitar-chords');
+  gcEl.innerHTML='';
+  chords.forEach((ch,i)=>{
+    const name=chordDisplayName(ch.root,ch.quality);
+    const gData=getGuitarChord(ch.root,ch.quality);
+    const box=document.createElement('div');
+    box.className='chord-box';
+    box.innerHTML=`
+      ${drawGuitarChordSVG(gData)}
+      <div class="chord-name">${name}</div>
+      <div class="chord-role">${ch.roman}</div>`;
+    box.onclick=()=>selectChord(i,chords,song);
+    gcEl.appendChild(box);
+  });
+
+  // Piano chord boxes
+  const pcEl=document.getElementById('piano-chords');
+  pcEl.innerHTML='';
+  chords.forEach((ch,i)=>{
+    const name=chordDisplayName(ch.root,ch.quality);
+    const notes=[ch.root,ch.third,ch.fifth];
+    const box=document.createElement('div');
+    box.className='piano-chord-box';
+    box.innerHTML=`
+      ${drawPianoChordSVG(notes)}
+      <div class="chord-name">${name}</div>
+      <div class="chord-role">${ch.roman}</div>`;
+    box.onclick=()=>selectChord(i,chords,song);
+    pcEl.appendChild(box);
+  });
+
+  document.getElementById('chord-detail').classList.remove('active');
+}
+
+function selectChord(i,chords,song){
+  activeChordIdx=i;
+  const ch=chords[i];
+  const name=chordDisplayName(ch.root,ch.quality);
+  const role=chordRoleDescription(ch);
+  const i3name=intervalName(ch.i3),i5name=intervalName(ch.i5),i7name=intervalName(ch.i7);
+  const det=document.getElementById('chord-detail');
+  det.classList.add('active');
+  det.innerHTML=`
+    <h3>${name} &nbsp;<span style="color:var(--muted);font-weight:400;font-size:.8rem">${ch.roman} chord in ${song.key} ${song.mode}</span></h3>
+    <div class="chord-notes-row">
+      <span class="cnote root">${ch.root} (root)</span>
+      <span class="cnote third">${ch.third} (${i3name})</span>
+      <span class="cnote fifth">${ch.fifth} (${i5name})</span>
+      <span class="cnote seventh">${ch.seventh} (${i7name} — 7th)</span>
+    </div>
+    <p>${role}</p>
+    <p style="margin-top:.4rem;font-size:.78rem">Extended to a 7th chord: <strong>${name}${ch.q7}</strong> — adds ${ch.seventh} (${i7name}) on top.</p>`;
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── Scale fretboard ───────────────────────────────────────
+const STR=['E','A','D','G','B','E'];
+
+function getStartFret(song){
+  if(posMode==='song')return song?song.pos:0;
+  if(posMode==='open')return 0;
+  return parseInt(posMode);
+}
+function setPos(mode){
+  posMode=mode;
+  ['pos-song','pos-open','pos-5','pos-7','pos-12'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  const map={'song':'pos-song','open':'pos-open',5:'pos-5',7:'pos-7',12:'pos-12'};
+  if(map[mode])document.getElementById(map[mode]).classList.add('active');
+  if(currentSongIdx!==null)drawFretboard(allSongs[currentSongIdx],getStartFret(allSongs[currentSongIdx]));
+}
+
+function drawFretboard(song,startFret){
+  const canvas=document.getElementById('fret-canvas');
+  const{scaleMap}=getScale(song);
+  const dpr=window.devicePixelRatio||1;
+  const W=Math.min(800,window.innerWidth-56);const H=192;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  const lp=44,rp=16,tp=32,bp=20,nf=7,ns=6;
+  const fw=(W-lp-rp)/nf,sh=(H-tp-bp)/(ns-1),dr=9;
+  const lc='rgba(255,255,255,0.1)',nc='rgba(255,255,255,0.45)',tc='rgba(255,255,255,0.32)';
+  for(let f=0;f<=nf;f++){
+    const x=lp+f*fw;
+    ctx.beginPath();ctx.moveTo(x,tp);ctx.lineTo(x,tp+sh*(ns-1));
+    ctx.strokeStyle=f===0&&startFret===0?nc:lc;ctx.lineWidth=f===0&&startFret===0?3:0.75;ctx.stroke();
+  }
+  [5,7,9,12,15,17,19,21,24].forEach(m=>{
+    const fi=m-startFret;if(fi<1||fi>nf)return;
+    const x=lp+(fi-.5)*fw,y=tp+sh*2.5;
+    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fill();
+    if(m===12||m===24){[1.5,3.5].forEach(r=>{ctx.beginPath();ctx.arc(x,tp+sh*r,3,0,Math.PI*2);ctx.fill();});}
+  });
+  for(let s=0;s<ns;s++){
+    const y=tp+s*sh;
+    ctx.beginPath();ctx.moveTo(lp,y);ctx.lineTo(lp+nf*fw,y);
+    ctx.strokeStyle=lc;ctx.lineWidth=0.6+s*.12;ctx.stroke();
+    ctx.fillStyle=tc;ctx.font='11px "JetBrains Mono",monospace';ctx.textAlign='right';ctx.fillText(STR[ns-1-s],lp-7,y+4);
+  }
+  for(let f=0;f<nf;f++){ctx.fillStyle=tc;ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.fillText(startFret+f+1,lp+(f+.5)*fw,tp-12);}
+  if(startFret===0){
+    for(let s=0;s<ns;s++){
+      const sr=STR[ns-1-s],nn=NOTES[NI(sr)%12];
+      if(scaleMap[nn]===undefined)continue;
+      const y=tp+s*sh,iv=scaleMap[nn];
+      ctx.beginPath();ctx.arc(lp-20,y,dr-1,0,Math.PI*2);ctx.fillStyle=degColor(iv);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='bold 8px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(IV[iv],lp-20,y);ctx.textBaseline='alphabetic';
+    }
+  }
+  for(let s=0;s<ns;s++){
+    const sr=STR[ns-1-s],y=tp+s*sh;
+    for(let f=0;f<nf;f++){
+      const nn=NOTES[(NI(sr)+startFret+f+1)%12];
+      if(scaleMap[nn]===undefined)continue;
+      const x=lp+(f+.5)*fw,iv=scaleMap[nn];
+      ctx.beginPath();ctx.arc(x,y,dr,0,Math.PI*2);ctx.fillStyle=degColor(iv);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='bold 8px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(IV[iv],x,y);ctx.textBaseline='alphabetic';
+    }
+  }
+}
+
+function drawPiano(song){
+  const canvas=document.getElementById('piano-canvas');
+  const{scaleMap}=getScale(song);
+  const dpr=window.devicePixelRatio||1;
+  const W=Math.min(800,window.innerWidth-56);const H=128;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  const ws=[0,2,4,5,7,9,11],bs=[1,3,-1,6,8,10,-1];
+  const no=2,tw=7*no,wW=Math.floor((W-2)/tw),wH=H-18;
+  const bW=Math.round(wW*.58),bH=Math.round(wH*.60);
+  let wx=1;
+  for(let o=0;o<no;o++){
+    for(let w=0;w<7;w++){
+      const sm=(ws[w]+o*12)%12,nn=NOTES[sm],ins=scaleMap[nn]!==undefined;
+      ctx.fillStyle=ins?degColor(scaleMap[nn]):'#1e1e22';
+      ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=0.75;
+      ctx.fillRect(wx,2,wW-1,wH);ctx.strokeRect(wx,2,wW-1,wH);
+      if(ins){ctx.fillStyle='rgba(255,255,255,0.9)';ctx.font='bold 8px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(IV[scaleMap[nn]],wx+wW/2-.5,wH+1);ctx.textBaseline='alphabetic';}
+      if(nn==='C'){ctx.fillStyle=ins?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.18)';ctx.font='9px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.fillText('C'+(o+4),wx+wW/2-.5,wH-5);}
+      wx+=wW;
+    }
+  }
+  wx=1;
+  for(let o=0;o<no;o++){
+    for(let w=0;w<7;w++){
+      const bp=bs[w];if(bp<0){wx+=wW;continue;}
+      const sm=(bp+o*12)%12,nn=NOTES[sm],ins=scaleMap[nn]!==undefined;
+      const bx=wx+wW-Math.round(bW/2);
+      ctx.fillStyle=ins?degColor(scaleMap[nn]):'#111113';
+      ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=0.5;
+      ctx.fillRect(bx,2,bW,bH);ctx.strokeRect(bx,2,bW,bH);
+      if(ins){ctx.fillStyle='rgba(255,255,255,0.9)';ctx.font='bold 7px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(IV[scaleMap[nn]],bx+bW/2,bH+1);ctx.textBaseline='alphabetic';}
+      wx+=wW;
+    }
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────
+buildSongList();
+window.addEventListener('resize',()=>{
+  if(currentSongIdx!==null){
+    const s=allSongs[currentSongIdx];
+    if(activeTab==='scales'){drawFretboard(s,getStartFret(s));drawPiano(s);}
+  }
+});
+</script>
+</body>
+</html>
